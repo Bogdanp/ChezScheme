@@ -13,7 +13,7 @@ The Chez Scheme simulation hasn't been made especially fast, so expect
 the bootstrap process to take 10 times as long as using an existing
 Chez Scheme.
 
-While the similation of Chez Scheme should be robust to many Chez
+While the simulation of Chez Scheme should be robust to many Chez
 Scheme changes, it does rely on details of the Chez Scheme
 implementation and source, So, the simulation will have to be updated
 to accommodate some Chez Scheme changes.

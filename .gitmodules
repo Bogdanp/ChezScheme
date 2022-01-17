@@ -14,3 +14,6 @@
 	path = boot/pb
 	url = https://github.com/racket/pb
 	branch = circa-7.9.0.5-1
+[submodule "libffi"]
+	path = libffi
+	url = https://github.com/libffi/libffi

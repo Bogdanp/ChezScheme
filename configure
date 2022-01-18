@@ -71,16 +71,21 @@ default_warning_flags="-Wpointer-arith -Wall -Wextra -Wno-implicit-fallthrough"
 : ${ARFLAGS:="rc"}
 : ${RANLIB:="ranlib"}
 : ${WINDRES:="windres"}
+libffiInc=-I../libffi/include
 zlibInc=-I../zlib
 LZ4Inc=-I../lz4/lib
+libffiDep=../libffi/.libs/libffi.a
 zlibDep=../zlib/libz.a
 LZ4Dep=../lz4/lib/liblz4.a
+libffiLib=../libffi/.libs/libffi.a
 zlibLib=../zlib/libz.a
 LZ4Lib=../lz4/lib/liblz4.a
+libffiHeaderDep="../libffi/include/ffi.h"
 zlibHeaderDep="../zlib/zconf.h ../zlib/zlib.h"
 LZ4HeaderDep="../lz4/lib/lz4.h ../lz4/lib/lz4frame.h"
 Kernel=KernelLib
 installkerneltarget=installkernellib
+installlibffitarget=installlibffi
 installzlibtarget=installzlib
 installlz4target=installlz4
 
@@ -273,6 +278,9 @@ while [ $# != 0 ] ; do
     --libkernel)
       Kernel=KernelLib
       installkerneltarget=installkernellib
+      if [ "$libffiInc" != "" ]; then
+          installlibffitarget=installlibffi
+      fi
       if [ "$zlibInc" != "" ]; then
           installzlibtarget=installzlib
       fi
@@ -316,6 +324,13 @@ while [ $# != 0 ] ; do
       ;;
     WINDRES=*)
       WINDRES=`echo $1 | sed -e 's/^WINDRES=//'`
+      ;;
+    LIFBFFI=*)
+      libffiLib=`echo $1 | sed -e 's/^LIBFFI=//'`
+      libffiInc=
+      libffiDep=
+      libffiHeaderDep=
+      installlibffitarget=
       ;;
     ZLIB=*)
       zlibLib=`echo $1 | sed -e 's/^ZLIB=//'`
@@ -380,7 +395,7 @@ if [ "$m" = "" ] ; then
          echo "probably your OS and architecture combination is not supported."
          exit 1
      fi
-  else      
+  else
     m=$defaultm
     flagsm=$m
   fi
@@ -390,6 +405,14 @@ elif [ $pb = yes ] ; then
   m=pb
 else
   flagsm=$m
+fi
+
+if [ "$m" != "pb" ]; then
+    libffiInc=
+    libffiDep=
+    libffiLib=
+    libffiHeaderDep=
+    installlibffitarget=
 fi
 
 if [ "$w" = "" ] ; then
@@ -449,6 +472,7 @@ if [ "$help" = "yes" ]; then
   echo "  ARFLAGS=<archiver flgs>           archiver flags"
   echo "  RANLIB=<archive indexer>          archive indexer"
   echo "  WINDRES=<resource compiler>       resource compiler"
+  echo "  LIBFFI=<lib>                      link to <lib> instead of own libffi"
   echo "  ZLIB=<lib>                        link to <lib> instead of own zlib"
   echo "  LZ4=<lib>                         link to <lib> instead of own LZ4"
   echo ""
@@ -654,6 +678,12 @@ if [ ! -f "$srcdir"/nanopass/nanopass.ss ] ; then
     submod_instructions 'Source in "nanopass" is missing'
 fi
 
+if [ "${libffiDep}" != "" ]; then
+    if [ ! -f "$srcdir"/libffi/autogen.sh ]; then
+        submod_instructions 'Source in "libffi" is missing'
+    fi
+fi
+
 if [ "${zlibDep}" != "" ] ; then
     if [ ! -f "$srcdir"/zlib/configure ] ; then
         submod_instructions 'Source in "zlib" is missing'
@@ -675,7 +705,7 @@ mdinclude=
 mdcppflags=
 mdcflags=
 mdldflags=
-mdlinkflags= 
+mdlinkflags=
 zlibConfigureFlags=
 exePostStep=":"
 
@@ -842,6 +872,7 @@ sed -e "s;^m=none\$;m=$m;"\
     -e "s;^InstallPetiteName=.*$;InstallPetiteName=$installpetitename;"\
     -e "s;^InstallScriptName=.*$;InstallScriptName=$installscriptname;"\
     -e "s;^InstallKernelTarget=.*$;InstallKernelTarget=$installkerneltarget;"\
+    -e "s;^InstallLibffitarget=.*$;InstallLibffitarget=$installlibffitarget;"\
     -e "s;^InstallZlibTarget=.*$;InstallZlibTarget=$installzlibtarget;"\
     -e "s;^InstallLZ4Target=.*$;InstallLZ4Target=$installlz4target;"\
     "$srcdir"/makefiles/Mf-install.in > $w/Mf-install
@@ -901,12 +932,16 @@ RANLIB=$RANLIB
 WINDRES=$WINDRES
 cursesLib=$cursesLib
 ncursesLib=$ncursesLib
+libffiInc=$libffiInc
 zlibInc=$zlibInc
 LZ4Inc=$LZ4Inc
+libffiDep=$libffiDep
 zlibDep=$zlibDep
 LZ4Dep=$LZ4Dep
+libffiLib=$libffiLib
 zlibLib=$zlibLib
 LZ4Lib=$LZ4Lib
+libffiHeaderDep=$libffiHeaderDep
 zlibHeaderDep=$zlibHeaderDep
 LZ4HeaderDep=$LZ4HeaderDep
 warningFlags=$warningFlags

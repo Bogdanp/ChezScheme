@@ -6,10 +6,10 @@ include Mf-base
 .SUFFIXES: .c .o
 
 .c.o:
-	$C -c ${mdcppflags} -D${Cpu} -I${Include} ${zlibInc} ${LZ4Inc} ${mdinclude} $*.c
+	$C -c ${mdcppflags} -D${Cpu} -I${Include} ${libffiInc} ${zlibInc} ${LZ4Inc} ${mdinclude} $*.c
 
-${KernelO}: ${kernelobj} ${zlibDep} ${LZ4Dep}
-	${LD} -r -X ${mdldflags} -o ${KernelO} ${kernelobj} ${zlibLib} ${LZ4Lib}
+${KernelO}: ${kernelobj} ${libffiDep} ${zlibDep} ${LZ4Dep}
+	${LD} -r -X ${mdldflags} -o ${KernelO} ${kernelobj} ${libffiLib} ${zlibLib} ${LZ4Lib}
 
 ${KernelLib}: ${kernelobj}
 	${AR} ${ARFLAGS} ${KernelLib} ${kernelobj}
@@ -17,6 +17,12 @@ ${KernelLib}: ${kernelobj}
 ${Scheme}: ${Kernel} ${KernelLinkDeps} ${Main}
 	$C ${mdlinkflags} -o ${Scheme} ${Main} ${Kernel} ${KernelLinkLibs} ${LDFLAGS} ${LIBS}
 	${exePostStep}
+
+../libffi/config.log:
+	(cd ../libffi; ${SetConfigEnv} CFLAGS="${CFLAGS}" LDFLAGS="${LDFLAGS}" ./autogen.sh && ./configure --disable-builddir)
+
+../libffi/.libs/libffi.a: ../libffi/config.log
+	(cd ../libffi; ${SetConfigEnv} CFLAGS="${CFLAGS}" LDFLAGS="${LDFLAGS}" ${MAKE})
 
 ../zlib/configure.log:
 	(cd ../zlib; ${SetConfigEnv} CFLAGS="${CFLAGS}" LDFLAGS="${LDFLAGS}" ./configure ${zlibConfigureFlags})
